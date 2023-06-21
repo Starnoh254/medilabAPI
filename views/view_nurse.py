@@ -96,32 +96,33 @@ class ChangePassword(Resource):
             otp = json['otp']
             password1 = json['password1']
             password2 = json['password2']
-            hashed_otp = hash_password(otp)
+            
 
-            sql = ''' select * from nurses where nurse_id = %s and password = %s'''
+            sql = ''' select * from nurses where nurse_id = %s'''
             connection = pymysql.connect(host='localhost',
                                                 user='root',
                                                 password='',
                                                 database='medilab')
             cursor = connection.cursor(pymysql.cursors.DictCursor)
-            cursor.execute(sql, (hashed_otp,nurse_id))
-            the_password = cursor.fetchall()
+            cursor.execute(sql, (nurse_id))
+            the_password = cursor.fetchone()
             count = cursor.rowcount
             if count == 0 :
-                message = 'You have not entered the password.Please enter the password'
+                message = 'The nurse does not exist'
                 return jsonify({'message ': message})
+            
             else:
                 password = the_password['password']
                 if hash_verify(otp,password):
                       if password1 == password2:
                             hashed_new_password = hash_password(password1)
-                            sql2 = '''insert into nurses(password)values (%s)'''
+                            sql2 = '''update nurses set password = %s where nurse_id = %s'''
                             connection2 = pymysql.connect(host='localhost',
                                                 user='root',
                                                 password='',
                                                 database='medilab')
                             cursor2 = connection2.cursor(pymysql.cursors.DictCursor)
-                            cursor2.execute(sql2, hashed_new_password)
+                            cursor2.execute(sql2, (hashed_new_password,nurse_id))
                             return jsonify({'message': 'you changed your password successfully'})
                       else:
                             return jsonify({'message': 'you password do not match.Please try again'})
